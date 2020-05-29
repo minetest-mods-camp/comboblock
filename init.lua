@@ -11,6 +11,12 @@
 --     first 3 numbers version of minetest created for, last digit mod version     -- 
 -------------------------------------------------------------------------------------
 
+----------------------------
+--        Settings        --
+----------------------------
+local S = minetest.get_translator(minetest.get_current_modname())
+local cs = tonumber(minetest.settings:get("comboblock_scale")) or 16
+
 
 ----------------------------
 --       Functions        --
@@ -62,8 +68,7 @@ local function registered_nodes_by_group(groupname)
 	return result
 end
 
-
--- Add "^[lowpart:50:" to all image names against source node for V2 (bottoms)
+-- Add "^[lowpart:50:" and resize to all image names against source node for V2 (bottoms)
 function add_lowpart(tiles)                                       
 
 	local name_split = string.split(tiles.name,"^")
@@ -78,7 +83,9 @@ function add_lowpart(tiles)
 					new_name = new_name.."^"..name_split[i]            -- catch coloring etc
 				end
 			else
-				new_name = new_name.."^[lowpart:50:"..name_split[i]    -- append lower 50% to any graphic used on lower blocks
+				new_name = new_name..
+						   "^[lowpart:50:"..name_split[i]..            -- overlay lower 50% 
+						   "\\^[resize\\:"..cs.."x"..cs                -- resize image to comboblock scale
 			
 			end
 			i=i+1
@@ -88,15 +95,14 @@ end                                                             -- Output Two or
 
 
 -- place slab against side of node
-function side_place(itemstack,placer,pointed_thing,node,nepos)
+function side_place(itemstack,placer,pointed_thing,node,nepos,err_mix,err_un)
 		local tar_node_name = node.name                                                  -- node offset by +1/-1 along relevant axis of clicked node
 		local pla_node_name = itemstack:get_name()                                       -- node the player wants to place
 		local pla_is_glass = string.find(string.lower(tostring(itemstack:get_name())), "glass")
 		local node_is_slab = minetest.registered_nodes[node.name].groups.slab            -- is node (relative)infront clicked slab
 	    local node_is_glass = string.find(string.lower(tostring(node.name)), "glass")    -- is node (relative)infront clicked glass
 	    local node_is_flora = minetest.get_item_group(node.name, "flora")                -- is node (relative)infront clicked flora
-		local err_mix = "Hmmmm... that wont work I can't mix glass slabs and none glass slabs"   -- error txt for mixing glass/not glass
-		local err_un = "Hmmmm... The slab wont fit there, somethings in the way"                 -- error txt for unknown/unexpected
+
 		
 	if node_is_slab == 1 and                                                             -- Clicked a Slab
 	  (node.param2 >= 20 and node.param2 <= 23) and                                      -- top slab (@ top of node space)
@@ -240,7 +246,7 @@ for k,v1 in pairs(slab_index) do
 						
 			if not v2_tiles[3] then
 				v2_tiles[3] = table.copy(v2_tiles[2])          -- must be table copy do not use "=" 
-			    v2_tiles[3].name = add_lowpart(v2_tiles[3])    -- only need to od this once as 4,5,6 are basically copy of 3
+			    v2_tiles[3].name = add_lowpart(v2_tiles[3])    -- only need to do this once as 4,5,6 are basically copy of 3
 			else
 				v2_tiles[3].name= add_lowpart(v2_tiles[3])	   -- If node has images specified for each slot have to add  string to the front of those    			
 			end
@@ -282,11 +288,12 @@ for k,v1 in pairs(slab_index) do
 		if v1_is_glass and v2_is_glass then                                                           -- glass_glass nodes so drawtype = glasslike
 				minetest.register_node("comboblock:"..v1:split(":")[2].."_onc_"..v2:split(":")[2], {  -- registering the new combo nodes
 					description = v1_def.description.." on "..v2_def.description,
-					tiles = {v1_tiles[1].name, v2_tiles[2].name,
-							v1_tiles[3].name..v2_tiles[3].name,                      -- Stairs registers it's tiles slightly differently now
-							v1_tiles[4].name..v2_tiles[4].name,                      -- in a nested table structure and now makes use of 
-							v1_tiles[5].name..v2_tiles[5].name,                      -- align_style = "world" for most slabs....I think
-							v1_tiles[6].name..v2_tiles[6].name
+					tiles = {v1_tiles[1].name.."^[resize:"..cs.."x"..cs, 
+							 v2_tiles[2].name.."^[resize:"..cs.."x"..cs,
+							v1_tiles[3].name.."^[resize:"..cs.."x"..cs..v2_tiles[3].name,                      -- Stairs registers it's tiles slightly differently now
+							v1_tiles[4].name.."^[resize:"..cs.."x"..cs..v2_tiles[4].name,                      -- in a nested table structure and now makes use of 
+							v1_tiles[5].name.."^[resize:"..cs.."x"..cs..v2_tiles[5].name,                      -- align_style = "world" for most slabs....I think
+							v1_tiles[6].name.."^[resize:"..cs.."x"..cs..v2_tiles[6].name
 							},
 					paramtype = "light",
 					paramtype2 = "facedir",
@@ -308,11 +315,12 @@ for k,v1 in pairs(slab_index) do
 --minetest.debug (v1_tiles[1].name.." "..v2_tiles[1].name)																		
 				minetest.register_node("comboblock:"..v1:split(":")[2].."_onc_"..v2:split(":")[2], {  -- registering the new combo nodes
 					description = v1_def.description.." on "..v2_def.description,					
-					tiles = {v1_tiles[1].name, v2_tiles[1].name,
-							v1_tiles[3].name..v2_tiles[3].name,                                       -- Stairs registers it's tiles slightly differently now
-							v1_tiles[4].name..v2_tiles[4].name,                                       -- in a nested table structure and now makes use of 
-							v1_tiles[5].name..v2_tiles[5].name,                                       -- align_style = "world" for most slabs....I think
-							v1_tiles[6].name..v2_tiles[6].name
+					tiles = {v1_tiles[1].name.."^[resize:"..cs.."x"..cs, 
+							 v2_tiles[2].name.."^[resize:"..cs.."x"..cs,
+							 v1_tiles[3].name.."^[resize:"..cs.."x"..cs..v2_tiles[3].name,                                       -- Stairs registers it's tiles slightly differently now
+							 v1_tiles[4].name.."^[resize:"..cs.."x"..cs..v2_tiles[4].name,                                       -- in a nested table structure and now makes use of 
+							 v1_tiles[5].name.."^[resize:"..cs.."x"..cs..v2_tiles[5].name,                                       -- align_style = "world" for most slabs....I think
+							 v1_tiles[6].name.."^[resize:"..cs.."x"..cs..v2_tiles[6].name
 							},
 					paramtype = "light",
 					paramtype2 = "facedir",
@@ -351,7 +359,7 @@ for k,v1 in pairs(slab_index) do
 				local pla_is_glass = string.find(string.lower(tostring(itemstack:get_name())), "glass")  -- itemstack item glass slab (trying to place item)
 				local node_c = minetest.get_node({x=pos.x, y=pos.y, z=pos.z})                            -- node clicked
 				local node_c_isslab = minetest.registered_nodes[node_c.name].groups.slab                 -- is node clicked in slab group	
-				
+
 			if fpos == 0.5 then                                                                          -- clicked a flat top or bottom surface
 
 				local node_c_is_glass = string.find(string.lower(tostring(node_c.name)), "glass")        -- is node clicked glass
@@ -723,13 +731,13 @@ for k,v1 in pairs(slab_index) do
 						local node = minetest.get_node({x=pos.x, y=pos.y, z=pos.z})					
 						local nepos = {x=pos.x, y=pos.y, z=pos.z}
 					    
-							side_place(itemstack,placer,pointed_thing,node,nepos)	
+							side_place(itemstack,placer,pointed_thing,node,nepos,err_mix,err_un)	
 			
 					elseif pparam2 == 0 then                                                                 -- -z side
 						local node = minetest.get_node({x=pos.x, y=pos.y, z=pos.z-1})					
 						local nepos = {x=pos.x, y=pos.y, z=pos.z-1}
 					    
-							side_place(itemstack,placer,pointed_thing,node,nepos)	
+							side_place(itemstack,placer,pointed_thing,node,nepos,err_mix,err_un)	
 
 					elseif pparam2 == 1 and                                                                 -- -x side
 					(node_c.param2 >= 16 and node_c.param2 <= 19) and                                       -- from this direction must be standing vertical at back of node
@@ -737,13 +745,13 @@ for k,v1 in pairs(slab_index) do
 						local node = minetest.get_node({x=pos.x, y=pos.y, z=pos.z})					
 						local nepos = {x=pos.x, y=pos.y, z=pos.z}
 					    
-							side_place(itemstack,placer,pointed_thing,node,nepos)	
+							side_place(itemstack,placer,pointed_thing,node,nepos,err_mix,err_un)	
 					
 					elseif pparam2 == 1 then                                                                -- -x side
 						local node = minetest.get_node({x=pos.x-1, y=pos.y, z=pos.z})
 						local nepos = {x=pos.x-1, y=pos.y, z=pos.z}
 					
-						side_place(itemstack,placer,pointed_thing,node,nepos)
+						side_place(itemstack,placer,pointed_thing,node,nepos,err_mix,err_un)
 
 					elseif pparam2 == 2 and                                                                 -- +z side
 					(node_c.param2 >= 4 and node_c.param2 <= 7) and                                         -- from this direction must be standing vertical at back of node
@@ -751,13 +759,13 @@ for k,v1 in pairs(slab_index) do
 						local node = minetest.get_node({x=pos.x, y=pos.y, z=pos.z})					
 						local nepos = {x=pos.x, y=pos.y, z=pos.z}
 					    
-							side_place(itemstack,placer,pointed_thing,node,nepos)	
+							side_place(itemstack,placer,pointed_thing,node,nepos,err_mix,err_un)	
 						
 					elseif pparam2 == 2 then                                                                -- +z side
 						local node = minetest.get_node({x=pos.x, y=pos.y, z=pos.z+1})
 						local nepos = {x=pos.x, y=pos.y, z=pos.z+1}
 					
-						side_place(itemstack,placer,pointed_thing,node,nepos)
+						side_place(itemstack,placer,pointed_thing,node,nepos,err_mix,err_un)
 
 					elseif pparam2 == 3 and                                                                 -- +x side
 					(node_c.param2 >= 12 and node_c.param2 <= 15) and                                       -- from this direction must be standing vertical at back of node
@@ -765,13 +773,13 @@ for k,v1 in pairs(slab_index) do
 						local node = minetest.get_node({x=pos.x, y=pos.y, z=pos.z})					
 						local nepos = {x=pos.x, y=pos.y, z=pos.z}
 					    
-							side_place(itemstack,placer,pointed_thing,node,nepos)	
+							side_place(itemstack,placer,pointed_thing,node,nepos,err_mix,err_un)	
 						
 					elseif pparam2 == 3 then                                                                -- +x side
 						local node = minetest.get_node({x=pos.x+1, y=pos.y, z=pos.z})
 						local nepos = {x=pos.x+1, y=pos.y, z=pos.z}
 					
-						side_place(itemstack,placer,pointed_thing,node,nepos)
+						side_place(itemstack,placer,pointed_thing,node,nepos,err_mix,err_un)
 						
 					else                                                                                    -- Last error catch to account for the unknown/unexpected
 						minetest.chat_send_player(player_n, err_un)   

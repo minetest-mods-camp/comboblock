@@ -47,7 +47,7 @@ For more information, please refer to <http://unlicense.org>
 =======================================================================
 =======================================================================
 =======================================================================
-The Function "rotate and place" found int he stairs mod of the minetest game
+The Function "rotate and place" found in the stairs mod of the minetest game
 has been included unaltered and is under the below LGPL 2.1 Licence. This function
 has been clearly labelled inside init.lua
 

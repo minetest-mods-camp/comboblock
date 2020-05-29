@@ -25,6 +25,28 @@ For straight download it'll add the word master eg comboblock-master
 
 Rename the folder to be just comboblock
 
+---------------------- Set Base/Default Texture Pack Scale --------------------------
+
+By default comboblock is configured to the correct resolution for the base minetest 
+game texture resolution - 16x16px. This means any mods that use a higher resolution that 
+include slabs will have the slabs resized to 16x16 when used in combo with another slab.
+Note: when used on there own the Slab resolution will be unchanged.
+
+If you have installed and enabled a texture pack that has a higher resoltuion you'll need
+to adjust the comboblock scale setting udner settings to the correct value.
+From the main minetest screen:
+							  ~ "Settings" tab 
+							  ~ "All Settings" button 
+							  ~ "Mods" scroll to bottom of list
+							  ~ Expand "Mods"	
+                              ~ Expand "Comboblock"
+							  ~ Double click "Scale Textures to"
+							  ~ Change value to texture pack resolution eg 32,64,128 etc
+							  ~ Save and close settings
+
+You'll know if you have this configured incorrectly as comboblock blocks will behave in 
+intresting ways.
+							  
 -------------------------------- Version Number -------------------------------------
 Comboblock has been given a version number that helps align it to the version of minetest
 it was developed against. It dosen't mean it wont work with an older or new version of 
@@ -45,8 +67,8 @@ Issue 1 - Glass and Non-Glass slabs can't be stacked togther. this is an engine 
           and if allowed results in some strange display behaviour when viewed in game.
 		  
 Issue 2 - If you rotate a comboblock with a screwdriver type tool (lots out there), the block
-		  will always retain the propoerties of the block that was ontop. I haven't been able
-		  work out a fix yet as Im trying to avoid changing the screwdriver(s) code.
+		  will always retain the properties of the block that was ontop. I haven't been able
+		  to work out a fix yet as Im trying to avoid changing the screwdriver(s) code.
 		  
 ------------------------------------ Thanks ----------------------------------------
 Big thanks to Pithy for writting the orginal mod and the help from various people on the 
