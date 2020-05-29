@@ -35,14 +35,14 @@ Note: when used on there own the Slab resolution will be unchanged.
 If you have installed and enabled a texture pack that has a higher resoltuion you'll need
 to adjust the comboblock scale setting udner settings to the correct value.
 From the main minetest screen:
-							  ~ "Settings" tab 
-							  ~ "All Settings" button 
-							  ~ "Mods" scroll to bottom of list
-							  ~ Expand "Mods"	
+                              ~ "Settings" tab 
+                              ~ "All Settings" button 
+                              ~ "Mods" scroll to bottom of list
+                              ~ Expand "Mods"	
                               ~ Expand "Comboblock"
-							  ~ Double click "Scale Textures to"
-							  ~ Change value to texture pack resolution eg 32,64,128 etc
-							  ~ Save and close settings
+                              ~ Double click "Scale Textures to"
+                              ~ Change value to texture pack resolution eg 32,64,128 etc
+                              ~ Save and close settings
 
 You'll know if you have this configured incorrectly as comboblock blocks will behave in 
 intresting ways.
