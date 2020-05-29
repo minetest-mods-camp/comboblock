@@ -7,7 +7,7 @@
 --            \/             \/    \/              \/                 \/     \/    --
 --                                                                                 --
 --                  Orginally written/created by Pithydon/Pithy                    --
---					           Version 5.2.0.2                                     --
+--					           Version 5.2.0.3                                     --
 --     first 3 numbers version of minetest created for, last digit mod version     -- 
 -------------------------------------------------------------------------------------
 
