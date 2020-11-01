@@ -354,8 +354,8 @@ for k,v1 in pairs(slab_index) do
 				local pparam2 = minetest.dir_to_facedir(vector.subtract(pos,pos1))
 				local placer_pos = placer:get_pos()				
 				local player_n = placer:get_player_name()
-				local err_mix = "Hmmmm... that wont work I can't mix glass slabs and none glass slabs"   -- error txt for mixing glass/not glass
-				local err_un = "Hmmmm... The slab wont fit there, somethings in the way"                 -- error txt for unknown/unexpected
+				local err_mix = S("Hmmmm... that wont work I can't mix glass slabs and none glass slabs")   -- error txt for mixing glass/not glass
+				local err_un = S("Hmmmm... The slab wont fit there, somethings in the way")                 -- error txt for unknown/unexpected
 				local pla_is_glass = string.find(string.lower(tostring(itemstack:get_name())), "glass")  -- itemstack item glass slab (trying to place item)
 				local node_c = minetest.get_node({x=pos.x, y=pos.y, z=pos.z})                            -- node clicked
 				local node_c_isslab = minetest.registered_nodes[node_c.name].groups.slab                 -- is node clicked in slab group	
