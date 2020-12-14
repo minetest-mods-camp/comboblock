@@ -7,8 +7,9 @@
 --            \/             \/    \/              \/                 \/     \/    --
 --                                                                                 --
 --                  Orginally written/created by Pithydon/Pithy                    --
---					           Version 5.2.0.3                                     --
---     first 3 numbers version of minetest created for, last digit mod version     -- 
+--					           Version 5.3.0.1                                     --
+--                first 3 numbers version of minetest created for,                 -- 
+--                   last digit mod version for MT version                         -- 
 -------------------------------------------------------------------------------------
 
 ----------------------------
