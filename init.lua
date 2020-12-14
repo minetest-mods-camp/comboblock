@@ -203,7 +203,7 @@ local slab_index = registered_nodes_by_group("slab")
 
 for k,v1 in pairs(slab_index) do
 
-	if node_count > 32768 then
+	if node_count > 32668 then
 		minetest.debug("WARNING:Comboblock - Max nodes registered: '"..v1.."' slab combos not registered")
 	else
 		local v1_def = minetest.registered_nodes[v1]                 -- Makes a copy of the relevant node settings	
