@@ -74,7 +74,7 @@ Issue 2 - If you rotate a comboblock with a screwdriver type tool (lots out ther
 Big thanks to Pithy for writting the orginal mod and the help from various people on the 
 MT forum boards even if they probably don't know they have helped:
 
-blert2112, Linuxdirk, Krock, Rubenwardy, Pampogokiraly, Joe7575, Sorcerykid, Daretmavi 
+blert2112, Linuxdirk, Krock, Rubenwardy, Pampogokiraly, Joe7575, Sorcerykid 
 
 And of course the Coredevs and Celeron55 for designing/keeping the engine running 
 
