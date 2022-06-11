@@ -25,41 +25,6 @@ local comboblock = {}
 ----------------------------
 --       Functions        --
 ----------------------------
---=======================================================================--
---=======================================================================--
--- standard rotate and place function from stairs mod MT v5.2.0 to 
--- maintain standard stairs behaviour for slab placement (LGPLv2.1)
--- Start LGPLv2.1 code block see license.txt
-local function rotate_and_place(itemstack, placer, pointed_thing)
-	local p0 = pointed_thing.under
-	local p1 = pointed_thing.above
-	local param2 = 0
-
-	if placer then
-		local placer_pos = placer:get_pos()
-		if placer_pos then
-			param2 = minetest.dir_to_facedir(vector.subtract(p1, placer_pos))
-		end
-		 
-		local finepos = minetest.pointed_thing_to_face_pos(placer, pointed_thing)
-		local fpos = finepos.y % 1
-
-		if p0.y - 1 == p1.y or (fpos > 0 and fpos < 0.5)
-				or (fpos < -0.5 and fpos > -0.999999999) then
-			param2 = param2 + 20
-			if param2 == 21 then
-				param2 = 23
-			elseif param2 == 23 then
-				param2 = 21
-			end
-		end
-	end
-	return minetest.item_place(itemstack, placer, pointed_thing, param2)
-end
--- End of LGPLv2.1 code block see license.txt
---=======================================================================--
---=======================================================================--
-
 	------------------------------
 	-- Group retrieval function --
 	------------------------------
@@ -103,115 +68,64 @@ end
 			end		
 		return new_name                                             -- Output Single image eg ^[lowpart:50:default_cobble.png
 	end                                                             -- Output Two or more image eg  ^[lowpart:50:default_cobble.png^[lowpart:50:cracked_cobble.png
-	---------------------
-	-- Slab Place Side --
-	---------------------
-	function side_place(itemstack,placer,pointed_thing,node,nepos,err_mix,err_un)
-			local tar_node_name = node.name                                                  -- node offset by +1/-1 along relevant axis of clicked node
-			local pla_node_name = itemstack:get_name()                                       -- node the player wants to place
-			local pla_is_glass = string.find(string.lower(tostring(itemstack:get_name())), "glass")
-			local node_is_slab = minetest.registered_nodes[node.name].groups.slab            -- is node (relative)infront clicked slab
-			local node_is_glass = string.find(string.lower(tostring(node.name)), "glass")    -- is node (relative)infront clicked glass
-			local node_is_flora = minetest.get_item_group(node.name, "flora")                -- is node (relative)infront clicked flora
-
-			
-		if node_is_slab == 1 and                                                             -- Clicked a Slab
-		  (node.param2 >= 20 and node.param2 <= 23) and                                      -- top slab (@ top of node space)
-		   node_is_glass and                                                                 -- node is glass
-		   pla_is_glass then                                                                 -- placing item is glass
-					minetest.swap_node(nepos, {name = "comboblock:"..tar_node_name:split(":")[2].."_onc_"..pla_node_name:split(":")[2], param2 = pparam2})					
-					itemstack:take_item(1)                                                   -- Nil callbacks on swap node mnaual remove 1 item
-
-		elseif node_is_slab == 1 and                                                         -- Clicked a Slab
-		  (node.param2 >= 20 and node.param2 <= 23) and                                      -- top slab (@ top of node space)
-		   not node_is_glass and                                                             -- node is not glass
-		   not pla_is_glass then                                                             -- placing item is not glass
-					minetest.swap_node(nepos, {name = "comboblock:"..tar_node_name:split(":")[2].."_onc_"..pla_node_name:split(":")[2], param2 = pparam2})					
-					itemstack:take_item(1)                                                   -- Nil callbacks on swap node mnaual remove 1 item
-					
-		elseif node_is_slab == 1 and                                                         -- Clicked a Slab 
-			   node.param2 <= 19 and                                                          -- bottom slab (@ bottom of node space)
-			   node_is_glass and                                                             -- node is glass
-			   pla_is_glass then                                                             -- placing item is glass		   
-					minetest.swap_node(nepos, {name = "comboblock:"..pla_node_name:split(":")[2].."_onc_"..tar_node_name:split(":")[2], param2 = node.param2})							
-					itemstack:take_item(1)                                                   -- Nil callbacks on swap node mnaual remove 1 item 
-
-		elseif node_is_slab == 1 and                                                         -- Clicked a Slab 
-			   node.param2 <= 19 and                                                          -- bottom slab (@ bottom of node space)
-			   not node_is_glass and                                                         -- node is not glass
-			   not pla_is_glass then                                                         -- placing item is not glass		   
-					minetest.swap_node(nepos, {name = "comboblock:"..pla_node_name:split(":")[2].."_onc_"..tar_node_name:split(":")[2], param2 = node.param2})							
-					itemstack:take_item(1)                                                   -- Nil callbacks on swap node mnaual remove 1 item 
-					
-		elseif node_is_slab == nil and                                                       -- Clicked not a slab                                                               
-			   tar_node_name == "air" then                                                   -- Node to side is air
-					rotate_and_place(itemstack, placer, pointed_thing)                       -- do stairs mod place function                       
-
-		elseif node_is_slab == nil and                                                       -- Clicked not a slab                                                               
-			   node_is_flora > 0 then                                                        -- Node to side is air
-					rotate_and_place(itemstack, placer, pointed_thing)                       -- do stairs mod place function 
-
-	--Below here feedback to player you cant mix glass slabs and none glass slabs so they know this is feature
-		elseif node_is_slab == 1 and                                                         -- Clicked a Slab
-		  (node.param2 >= 0 and node.param2 <= 23) and                                       -- Any slab in any orientation (redundant check?)
-		   node_is_glass and                                                                 -- node is glass
-		   not pla_is_glass then                                                             -- placing item is not glass
-					minetest.chat_send_player(placer:get_player_name(), err_mix)				
-
-		elseif node_is_slab == 1 and                                                         -- Clicked a Slab
-		  (node.param2 >= 0 and node.param2 <= 23) and                                       -- Any slab in any orientation (redundant check?)
-		   not node_is_glass and                                                             -- node is not glass
-		   pla_is_glass then                                                                 -- placing item is not glass
-					minetest.chat_send_player(placer:get_player_name(), err_mix)
-
-
-					
-	-- Last error catch to account for the unknown/unexpected				
-		else                                                                                 
-			 minetest.chat_send_player(placer:get_player_name(), err_un)
-		end
-	end
 	
-	------------------------------------
-	-- Get Comboblock Name and Param2 --
-	------------------------------------	
-	local function cb_get_name_p2(t_b,pla_tar,placer) 
-		local output
+	-------------------------
+	-- Get Comboblock Name --
+	-------------------------	
+	local function cb_get_name(pla_tar,placer,node_c_name)   -- pas == pot_short_axis
 		
-		if not pla_tar.err then
-			if t_b > 0 then	
-				local first_node_name = pla_tar[1][1]
-				local second_node_name = pla_tar[2][1]								
-				local param2 = pparam2
-				
-				if pla_tar[2][2] == "a" then -- use node_a.param2 when tile in space above ie were we are placing
-					param2 = node_a.param2
-				end 
-													
-				output = {"comboblock:"..first_node_name:split(":")[2].."_onc_"..second_node_name:split(":")[2], param2}
-				
-			else -- tb < 0
-				local first_node_name = pla_tar[2][1]
-				local second_node_name = pla_tar[1][1]								
-				local param2 = pparam2
-				
-				-- flip to bottom node names when clicking bottom
-				if pla_tar[2][2] == "a" then
-					first_node_name = node_b.name
-					param2 = node_b.param2 			-- use node_b.param2 when tile in space below ie were we are placing
-				
-				elseif pla_tar[1][2] == "a" then
-					second_node_name = node_b.name
-				end
-				
-				output = {"comboblock:"..first_node_name:split(":")[2].."_onc_"..second_node_name:split(":")[2], param2}		
+		if not pla_tar.err then 
+			local first_node_name = pla_tar[1]
+			local second_node_name = node_c_name
+
+			if pla_tar[1] == "clicked" then
+				first_node_name = node_c_name
+				second_node_name = pla_tar[1]
 			end
+												
+			local output = "comboblock:"..first_node_name:split(":")[2].."_onc_"..second_node_name:split(":")[2]
+				
 			return output
 		else
 			minetest.chat_send_player(placer:get_player_name(), pla_tar.err) 
 		end
 	end	
 	
+	------------------------
+	-- Comboblock Raycast --
+	------------------------
+	local function combo_raycast(placer)		
+	-- calculation of eye position ripped from builtins 'pointed_thing_to_face_pos'
+		local placer_pos = placer:get_pos()
+		local eye_height = placer:get_properties().eye_height
+		local eye_offset = placer:get_eye_offset()
+		placer_pos.y = placer_pos.y + eye_height
+		placer_pos = vector.add(placer_pos, eye_offset)
+		
+		-- get wielded item range 5 is engine default
+		-- order tool/item range >> hand_range >> fallback 5
+		local tool_range = placer:get_wielded_item():get_definition().range or nil					
+		local hand_range	
+			for key, val in pairs(minetest.registered_items) do								
+				if key == "" then
+					hand_range = val.range or nil
+				end
+			end
+		local wield_range = tool_range or hand_range or 5
+		
+		-- determine ray end position
+		local look_dir = placer:get_look_dir()
+		look_dir = vector.multiply(look_dir, wield_range)
+		local end_pos = vector.add(look_dir, placer_pos)
+
+		-- get pointed_thing
+		local ray = {}
+		local ray = minetest.raycast(placer_pos, end_pos, false, false)
+		local ray_pt = ray:next()
+		
+		return ray_pt
+	end	
+
 ----------------------------
 --       Main Code        --
 ---------------------------- 
@@ -315,7 +229,6 @@ for _,v1 in pairs(slab_index) do
 					end
 				end				
 
-
 				-- Register nodes --
 
 				-- Very strange behaviour with orginal mod when placing glass and normal slabs ontop of each other. 
@@ -382,238 +295,119 @@ for _,v1 in pairs(slab_index) do
 		
 		minetest.override_item(v1, {
 			on_place = function(itemstack, placer, pointed_thing)			
-						local pos = pointed_thing.under
-						local pos1 = pointed_thing.above				
-						local exact_pos = minetest.pointed_thing_to_face_pos(placer,pointed_thing)
-						local fpos = exact_pos.y % 1
-						local pparam2 = minetest.dir_to_facedir(vector.subtract(pos,pos1))
+						local pos = pointed_thing.under			
 						local placer_pos = placer:get_pos()				
-						local player_n = placer:get_player_name()
 						local err_mix = S("Hmmmm... that wont work I can't mix glass slabs and none glass slabs")-- error txt for mixing glass/not glass
 						local err_un = S("Hmmmm... The slab wont fit there, somethings in the way")              -- error txt for unknown/unexpected
 						local pla_is_glass = string.find(string.lower(tostring(itemstack:get_name())), "glass")  -- itemstack item glass slab (trying to place item) - cant use drawtype as slabs are all type = nodebox
 						local node_c = minetest.get_node({x=pos.x, y=pos.y, z=pos.z})                            -- node clicked
 						local node_c_isslab = minetest.registered_nodes[node_c.name].groups.slab                 -- is node clicked in slab group					
-
-			if fpos == 0.5 then
-
-				local node_c_is_glass = string.find(string.lower(tostring(node_c.name)), "glass")        -- is node clicked glass
-				
-				local node_a = minetest.get_node({x=pos.x, y=pos.y+1, z=pos.z})                          -- node above clicked node
-				local node_a_isslab = minetest.registered_nodes[node_a.name].groups.slab                 -- is node above in slab group
-				local node_a_is_glass = string.find(string.lower(tostring(node_a.name)), "glass")        -- is node above glass
-				local node_a_is_flora = minetest.get_item_group(node_a.name, "flora")                    -- is node above flora
-				
-				local node_b = minetest.get_node({x=pos.x, y=pos.y-1, z=pos.z})                          -- node below clicked node
-				local node_b_isslab = minetest.registered_nodes[node_b.name].groups.slab                 -- is node below in slab group					
-				local node_b_is_glass = string.find(string.lower(tostring(node_b.name)), "glass")        -- is node below glass	
-				local node_b_is_flora = minetest.get_item_group(node_b.name, "flora")                    -- is node below flora				
-				local t_b = exact_pos.y - pos.y                                                          -- work out if clicked bottom or top side of slab	
-
+						local node_c_is_glass = string.find(string.lower(tostring(node_c.name)), "glass")        -- is node clicked glass
 			
-				-- Setup Truth tables
-				
-				-- Note 1: Truth tables are "top" surface click centric, the function
-				-- cb_get_name_p2 flips and changes values as needed for bottom
-				-- surface clicked - This was easier than duplicating truth tables.
-				-- If theres a problem with a bottom placement it maybe function related
-				-- not test table config related.
-				
-				-- Note 2: It wasn't until I built up the outcomes for test tables that the 
-				-- sameness between slab_other_orient and nil_slab became apparent.
-				
+				-- Setup Truth table				
 				local pgn = "F"  -- Place is_Glass Node
 				local cgn = "F"  -- Click is_Glass Node
-				local agn = "F"  -- Above is_Glass Node
-				local ap2 = "F"  -- Above Glass P2 value - Not Horizontal Slab at bottom
-				local bgn = "F"  -- Below is_Glass Node 
-				local bp2 = "F"  -- Below Glass P2 value
 				
 				-- Check truth table variables and switch "T"
 				if pla_is_glass then pgn = "T" end		
 				if node_c_is_glass then cgn = "T" end		
-				if node_a_is_glass then agn = "T" end
-				if node_b_is_glass then bgn = "T" end
-				
-				-- Horizontal Slab at Top
-				if node_a.param2 >= 20 and node_a.param2 <= 23 then ap2 = "T" end
-				
-				-- Horizontal Slab at Bottom
-				if node_b.param2 >= 0 and node_b.param2 <= 3  then  bp2 = "T" end
 						
-				local comboblock_truthtable_slab_horizontal = {
+				local comboblock_truthtable_rel_axis_horiz = {
 				-- User clicked top/bottom surface slab and slab is Horizontal
 				-- Place Glass, Click Glass
 				-- [    T     ,       T   ] - top record table key spaced out
-				["TT"] = {{itemstack:get_name(),"p"}, {node_c.name,"c"}},   -- New: Outcome Two
+				["TT"] = {itemstack:get_name(), "clicked"},				   	-- New: Outcome Two
 				["TF"] = {err = err_mix},                                 	-- New: Error Two
 				["FT"] = {err = err_mix},                               	-- New: Error One
-				["FF"] = {{itemstack:get_name(),"p"}, {node_c.name,"c"}}}   -- New: Outcome One
-
-				local comboblock_truthtable_slab_other_orient = {
-				-- User clicked top/bottom surface slab and slab in any other Orientation
-				-- Place Glass, Above/Below Node Glass, Above/Below P2 eg
-				-- [    T     ,       T               ,    T          ] - top record table key spaced out
-				["TTT"] = {{node_a.name,"a"}, {itemstack:get_name(),"p"}},   -- New: Outcome Six
-				["TTF"] = {{itemstack:get_name(),"p"}, {node_a.name,"a"}},   -- New: Outcome Seven
-				["TFT"] = {err = err_mix},                                	 -- New: Error Four
-				["TFF"] = {err = err_mix},                                	 -- New: Error Four
-				["FTT"] = {err = err_mix},                                	 -- New: Error Three
-				["FTF"] = {err = err_mix},                                	 -- New: Error Three
-				["FFT"] = {{node_a.name,"a"}, {itemstack:get_name(),"p"}},   -- New: Outcome Four
-				["FFF"] = {{itemstack:get_name(),"p"}, {node_a.name,"a"}}}   -- New: Outcome Five		
-
-				local comboblock_truthtable_nil_slab = {
-				-- User didn't click a slab but top/bottom surface of a node
-				-- Place Glass, Above/Below Node Glass, Above/Below P2 eg
-				-- [    T     ,       T               ,    T          ] - top record table key spaced out
-				["TTT"] = {{node_a.name,"a"}, {itemstack:get_name(),"p"}},   -- "New: Outcome Eleven"
-				["TTF"] = {{itemstack:get_name(),"p"}, {node_a.name,"a"}},   -- "New: Outcome Twelve"
-				["TFT"] = {err = err_mix},                               	 -- "New: Error Six"
-				["TFF"] = {err = err_mix},                                	 -- "New: Error Six"
-				["FTT"] = {err = err_mix},                                	 -- "New: Error Five"
-				["FTF"] = {err = err_mix},                                	 -- "New: Error Five"
-				["FFT"] = {{node_a.name,"a"},{itemstack:get_name(),"p"}},	 -- "New: Outcome Nine"
-				["FFF"] = {{itemstack:get_name(),"p"}, {node_a.name,"a"}}}	 -- "New: Outcome Ten"
+				["FF"] = {itemstack:get_name(), "clicked"}} 			  	-- New: Outcome One
 			
-			  -- Top and Bottom Surface clicking could be rationalilised into a single 
-			  -- section, however to aid interpretation/understanding left seperate. 
-			  
-			  --[[Clicked Top Surface]]--					
-				if t_b > 0 then												-- Top surface		
-					if node_c_isslab then									-- If we are clicking a slab, calculations are more complex.
-						if node_c.param2 <= 3 then							-- Slab in bottom half of node - Horizontal = Param2:0-3      									
-							local outcome = comboblock_truthtable_slab_horizontal[pgn..cgn]					
-							local n_p2 = cb_get_name_p2(t_b,outcome,placer)
-							
-							minetest.swap_node(pos,{name=n_p2[1], param2=n_p2[2]})
-							itemstack:take_item(1)
+				-- Used to identify potential half slab deep axis
+				local  comboblock_param_side_offset = {
+			  --xyz -- 1st axis = face dir, 2nd two used for placement
+				["100"] = {"x","y","z"},
+				["010"] = {"y","x","z"},
+				["001"] = {"z","y","x"}}
+			
+				local comboblock_p2_axis = {
+				["100"]  = {l = 4, r = 10, t = 22, b = 0, m = 15},  -- +X
+				["-100"] = {l = 10, r = 4, t = 22, b = 0, m = 17},  -- -X
+				["010"]  = {l = 4, r = 10, t = 19, b = 13, m = 0},  -- +Y
+				["0-10"] = {l = 10, r = 4, t = 19, b = 13, m = 22}, -- -Y
+				["001"]  = {l = 13, r = 19, t = 22, b = 0, m = 6},  -- +Z
+				["00-1"] = {l = 19, r = 13, t = 22, b = 0, m = 8}}  -- -Z				
+			
+			
+				-- clicked side for slabs can either be on node boundry or sunk in half
+				-- node depth. Need to identify the clicked side and later check if it's 
+				-- == 0 or not. Doing slabs this way means remaining code can effectively ignore 
+				-- axis and param2 except for final placement.
+				local pointed = combo_raycast(placer)
+				local point = vector.subtract(pointed.intersection_point,pointed.under)
+				local normal = pointed.intersection_normal
+				local nor_string = tostring(math.abs(normal.x)..math.abs(normal.y)..math.abs(normal.z))
+				local pot_short_axis = point[comboblock_param_side_offset[nor_string][1]]
+				local node_ax_pos     = vector.add(pos,normal)
+				local node_along_axis = minetest.get_node(node_ax_pos)                        				-- retrieve the node along +- axis for xyz 
+				local node_ax_is_slab = minetest.registered_nodes[node_along_axis.name].groups.slab    		-- is node along axis in slab group	
+				local node_ax_is_build = minetest.registered_nodes[node_along_axis.name].buildable_to       -- true/false
+				local node_ax_is_glass = string.find(string.lower(tostring(node_along_axis.name)), "glass") -- is node glass
+								
+				if pot_short_axis == 0 then																	-- Clicked inside existing node with slab               				
+					local outcome = comboblock_truthtable_rel_axis_horiz[pgn..cgn]	
+					local combo_name = cb_get_name(outcome,placer,node_c.name)                     
+					
+					if outcome.err == nil then 																-- Cant mix glass and normal slabs
+						minetest.swap_node(pos,{name=combo_name, param2=node_c.param2})
+						itemstack:take_item(1)
+					end					
+					
+				elseif node_ax_is_build then																-- Clicked surface and node along axis is_buildable								     					
+					local hor = comboblock_param_side_offset[nor_string][3]
+					local ver = comboblock_param_side_offset[nor_string][2]
+					
+					-- Switchs left/right when -/+ axis face clicked
+					local multi = normal[comboblock_param_side_offset[nor_string][1]]
+					local p2 = 0
+					
+					-- top/bot/left/right are fairly meaningless just labels
+					if math.abs(point[hor]) < 0.2 and math.abs(point[ver]) < 0.2 then
+						p2 = comboblock_p2_axis[tostring(normal.x..normal.y..normal.z)]["m"]
+					
+					elseif multi*point[hor] >= math.abs(point[ver]) then
+						p2 = comboblock_p2_axis[tostring(normal.x..normal.y..normal.z)]["r"]
+						
+					elseif multi*-point[hor] >= math.abs(point[ver]) then
+						p2 = comboblock_p2_axis[tostring(normal.x..normal.y..normal.z)]["l"]
+					
+					elseif point[ver] >= math.abs(point[hor]) then
+						p2 = comboblock_p2_axis[tostring(normal.x..normal.y..normal.z)]["t"]						
 
-						
-						else												-- False = Slab in top half of node all - Horizontal/Vertical = Param2:4-23 
-							if node_a.name == "air" or             			-- remove air and flora case - simple
-							node_a_is_flora > 0 then
-								minetest.item_place(itemstack, placer, pointed_thing, param2)
-								--minetest.debug(outcome)                     -- New:Outcome Three
-							
-							elseif node_a_isslab then						-- Theres a slab in the above node 
-								local outcome = comboblock_truthtable_slab_other_orient[pgn..agn..ap2]
-								local n_p2 = cb_get_name_p2(t_b,outcome,placer)
-								
-								minetest.swap_node(pos,{name=n_p2[1], param2=n_p2[2]})
-								itemstack:take_item(1)
-								
-							else
-								local name = placer:get_player_name()
-								minetest.chat_send_player(name ,err_un)     -- New:Unknown Case
-							end				
-						end			
-					else													-- We are not clicking a slab
-						if node_a.name == "air" or							-- remove air and flora case - simple
-						node_a_is_flora > 0 then
-							minetest.item_place(itemstack, placer, pointed_thing, param2)					
-							--minetest.debug(outcome)                   		-- New:Outcome Eight
-						
-						elseif node_a_isslab then							-- Theres a slab in the above node 
-							local outcome = comboblock_truthtable_nil_slab[pgn..agn..ap2]
-							local n_p2 = cb_get_name_p2(t_b,outcome,placer)
-							
-							minetest.swap_node(pos,{name=n_p2[1], param2=n_p2[2]})
-							itemstack:take_item(1)
-							
-						else
-							local name = placer:get_player_name()
-							minetest.chat_send_player(name ,err_un)     	-- New:Unknown Case
-						end						
+					elseif -point[ver] >= math.abs(point[hor]) then
+						p2 = comboblock_p2_axis[tostring(normal.x..normal.y..normal.z)]["b"]						
+
 					end
 					
-			  --[[Clicked Bottom Surface]]--	  										
-				elseif t_b < 0 then											-- Bottom surface
-					if node_c_isslab then                                   -- If we are clicking a slab, calculations are more complex.
-						if node_c.param2 >= 20 and node_c.param2 <= 23 then -- Slab in top half of node - Horizontal = Param2:20-23
-							local outcome = comboblock_truthtable_slab_horizontal[pgn..cgn]
-							local n_p2 = cb_get_name_p2(t_b,outcome,placer)
-							
-							minetest.swap_node(pos,{name=n_p2[1], param2=n_p2[2]})
-							itemstack:take_item(1)
-							
-						else												-- False = Slab in bottom half of node all - Horizontal/Vertical = Param2:0-19
-							if node_b.name == "air" or                      -- remove air and flora case - simple
-							node_b_is_flora > 0 then
-								local outcome = itemstack:get_name()
-								local param2 = pparam2+20   
-								
-								minetest.item_place(itemstack, placer, pointed_thing, param2)												
-							  --minetest.debug(outcome)                     -- New:Outcome Three
-							
-							elseif node_b_isslab then                       -- Theres a slab in the below node 
-								local outcome = comboblock_truthtable_slab_other_orient[pgn..bgn..bp2]
-								local n_p2 = cb_get_name_p2(t_b,outcome,placer)
-								
-								minetest.swap_node(pos,{name=n_p2[1], param2=n_p2[2]})
-								itemstack:take_item(1)
-								
-							else
-								local name = placer:get_player_name()
-								minetest.chat_send_player(name ,err_un)     -- New:Unknown Case
-							end									
-						end
-					else                                                    -- We are not clicking a slab
-						if node_b.name == "air" or							-- remove air and flora case - simple
-						node_b_is_flora > 0 then
-							local outcome = itemstack:get_name()
-							local param2 = pparam2+20   
-							
-							minetest.item_place(itemstack, placer, pointed_thing, param2)						
-						  --minetest.debug(outcome)                   		-- New:Outcome Eight
-
-						elseif node_b_isslab then							-- Theres a slab in the above node 
-							local outcome = comboblock_truthtable_nil_slab[pgn..bgn..bp2]
-							local n_p2 = cb_get_name_p2(t_b,outcome,placer)
-							
-							minetest.swap_node(pos,{name=n_p2[1], param2=n_p2[2]})
-							itemstack:take_item(1)
-							
-						else
-							local name = placer:get_player_name()
-							minetest.chat_send_player(name ,err_un)     	-- New:Unknown Case
-						end	
-					end
-				else
-					local name = placer:get_player_name()
-					minetest.chat_send_player(name ,err_un)     			-- New:Unknown Case
-				end
-				
-		  --[[Clicked Node Side]]--
-			else															
-				-- Used to set Param offset
-				local comboblock_param_side_offset = {
-				[0] = {x=0 ,z=-1},
-				[1] = {x=-1,z=0 },
-				[2] = {x=0 ,z=1 },
-				[3] = {x=1 ,z=0 }}
-			
-				if node_c_isslab and									-- If we are clicking a slab standing upright
-				   node_c.param2 >= 4 and node_c.param2 <= 19 then
-					local node = minetest.get_node(pos)
-					side_place(itemstack,placer,pointed_thing,node,pos,err_mix,err_un)
-					--minetest.debug("New: Side Slab on slab")
-				
-				elseif pparam2 <= 3	then									-- If we are clicking a node
-					local offset = comboblock_param_side_offset[pparam2] 
-					local new_pos = {x=pos.x+offset.x, y=pos.y, z=pos.z+offset.z}
-					local node = minetest.get_node(new_pos)
+					minetest.item_place(itemstack, placer, pointed_thing, p2)
 					
-						  side_place(itemstack,placer,pointed_thing,node,new_pos,err_mix,err_un)
-						--minetest.debug("New: Side Slab on node ".. minetest.pos_to_string(new_pos))
-				
+				elseif node_ax_is_slab then																    -- Clicked surface and node along axis is_slab				
+					-- use node_along_axis instead of node clicked 
+					-- recalc our clicked glass node true/false using node_along_axis as sub
+					if node_ax_is_glass then cgn = "T" end
+					
+					-- same process as our 1st if now but sub in node_along_axis details
+					local outcome = comboblock_truthtable_rel_axis_horiz[pgn..cgn]	
+					local combo_name = cb_get_name(outcome,placer,node_along_axis.name)
+					
+					if outcome.err == nil then 																-- Cant mix glass and normal slabs
+						minetest.swap_node(node_ax_pos,{name=combo_name, param2=node_along_axis.param2})
+						itemstack:take_item(1)	  
+					end
+					
 				else													-- Last error catch										
 					local name = placer:get_player_name()
 					minetest.chat_send_player(name ,err_un)     		-- New:Unknown Case
+				
 				end	
-
-
-			end
 			
 			if not creative.is_enabled_for(placer:get_player_name()) then					   
 				return itemstack
