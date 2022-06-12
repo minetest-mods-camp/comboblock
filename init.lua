@@ -125,6 +125,121 @@ local comboblock = {}
 		
 		return ray_pt
 	end	
+	
+	--------------------------
+	-- Comboblock Give Drop --
+	--------------------------
+	function comboblock.give_drop(digger, item)	
+		if not creative.is_enabled_for(digger:get_player_name()) then					   
+			local inv = digger:get_inventory()
+			if inv:room_for_item("main", ItemStack(item.." ".. 1)) then
+				inv:add_item("main", ItemStack(item.." ".. 1))
+			else
+				local pos = digger:get_pos()
+				minetest.item_drop(ItemStack(item.." ".. 1), digger, pos)
+			end
+		end	
+	end
+
+	--------------------
+	-- After Dig Node --
+	--------------------
+	
+	local function cb_after_dig_node(pos, oldnode, oldmetadata, digger)
+		-- I know weird I put the node back but otherwise we cant raycast and get exact pos
+		-- This avoids having to alter on_dig which is not recommended.
+		minetest.swap_node(pos, {name = oldnode.name, param2 = oldnode.param2})
+		
+		local pointed = combo_raycast(digger)
+		local point = vector.subtract(pointed.intersection_point,pointed.under)
+		local normal = pointed.intersection_normal
+		local nor_string = tostring(math.abs(normal.x)..math.abs(normal.y)..math.abs(normal.z))
+		local exact_nor_string = tostring(normal.x..normal.y..normal.z)
+		local v1 = minetest.registered_nodes[oldnode.name].comboblock_v1
+		local v2 = minetest.registered_nodes[oldnode.name].comboblock_v2
+
+		-- always lose this thread: https://forum.minetest.net/viewtopic.php?f=47&t=24188
+		-- converts axis and param2 into useful values for removal/swap
+		local comboblock_p2_axis = {
+			["100"]  = {[0] = {"hb",22,0},[1] = {"vl",10,4 },[2] = {"vr",4 ,10},[3] = {"bb",13,13},[4] = {"bt",13,13},[5] = {"ht",0,22}, ["h"] = "z", ["v"] = "y"},  -- +X
+			["-100"] = {[0] = {"hb",22,0},[1] = {"vl",10,4 },[2] = {"vr",4 ,10},[3] = {"bb",19,19},[4] = {"bt",19,19},[5] = {"ht",0,22}, ["h"] = "z", ["v"] = "y"},  -- -X
+			["010"]  = {[0] = {"bb",22,0},[1] = {"vl",10,4 },[2] = {"vr",4 ,10},[3] = {"hb",19,13},[4] = {"ht",13,19},[5] = {"bt",0,22}, ["h"] = "z", ["v"] = "x"},  -- +Y
+			["0-10"] = {[0] = {"bb",22,0},[1] = {"vl",10,4 },[2] = {"vr",4 ,10},[3] = {"hb",19,13},[4] = {"ht",13,19},[5] = {"bt",0,22}, ["h"] = "z", ["v"] = "x"},  -- -Y
+			["001"]  = {[0] = {"hb",22,0},[1] = {"bb",4 ,4 },[2] = {"bt",4 ,4 },[3] = {"vl",19,13},[4] = {"vr",13,19},[5] = {"ht",0,22}, ["h"] = "x", ["v"] = "y"},  -- +Z
+			["00-1"] = {[0] = {"hb",22,0},[1] = {"bb",10,10},[2] = {"bt",10,10},[3] = {"vl",19,13},[4] = {"vr",13,19},[5] = {"ht",0,22}, ["h"] = "x", ["v"] = "y"}}  -- -Z	
+		
+		local p2_axis = math.floor(oldnode.param2/4)
+		local outcome = comboblock_p2_axis[exact_nor_string][p2_axis][1]
+		local o_p2_v1 = comboblock_p2_axis[exact_nor_string][p2_axis][2]
+		local o_p2_v2 = comboblock_p2_axis[exact_nor_string][p2_axis][3]	
+		
+		local hor = comboblock_p2_axis[exact_nor_string]["h"]
+		local ver = comboblock_p2_axis[exact_nor_string]["v"]
+		
+		
+		-- v1 is always top half v2 is always bottom half - reverse of expected.
+		-- Using swap to minimise accidental callback triggering
+		if outcome == "hb" then
+			if point[ver] >= 0 then
+				minetest.swap_node(pos, {name = v2, param2 = o_p2_v2})
+				comboblock.give_drop(digger, v1)
+			else
+				minetest.swap_node(pos, {name = v1, param2 = o_p2_v1})
+				comboblock.give_drop(digger, v2)										
+			end
+			
+		elseif outcome == "ht" then								
+			if point[ver] >= 0 then
+				minetest.swap_node(pos, {name = v1, param2 = o_p2_v1})
+				comboblock.give_drop(digger, v2)										
+			else
+				minetest.swap_node(pos, {name = v2, param2 = o_p2_v2})
+				comboblock.give_drop(digger, v1)										
+			end
+			
+		elseif outcome == "vl" then								
+			if point[hor] >= 0 then
+				minetest.swap_node(pos, {name = v2, param2 = o_p2_v2})
+				comboblock.give_drop(digger, v1)
+			else
+				minetest.swap_node(pos, {name = v1, param2 = o_p2_v1})
+				comboblock.give_drop(digger, v2)										
+			end
+			
+		elseif outcome == "vr" then								
+			if point[hor] >= 0 then
+				minetest.swap_node(pos, {name = v1, param2 = o_p2_v1 })
+				comboblock.give_drop(digger, v2)
+			else
+				minetest.swap_node(pos, {name = v2, param2 = o_p2_v2 })
+				comboblock.give_drop(digger, v1)										
+			end
+		
+		elseif outcome == "bb" then								
+			if tonumber(exact_nor_string) == nil or
+			   tonumber(exact_nor_string) < 0 then
+				minetest.swap_node(pos, {name = v1, param2 =  o_p2_v1 })
+				comboblock.give_drop(digger, v2)
+			else
+				minetest.swap_node(pos, {name = v2, param2 =  o_p2_v2 })
+				comboblock.give_drop(digger, v1)										
+			end
+			
+		elseif outcome == "bt" then	
+			if tonumber(exact_nor_string) == nil or
+			   tonumber(exact_nor_string) < 0 then								
+				minetest.swap_node(pos, {name = v2, param2 =  o_p2_v2})
+				comboblock.give_drop(digger, v1)
+			else
+				minetest.swap_node(pos, {name = v1, param2 =  o_p2_v1 })
+				comboblock.give_drop(digger, v2)										
+			end								
+		else
+			local name = digger:get_player_name()
+			minetest.chat_send_player(name ,"Hmm...something has gone wrong, everything has crumbled!?!")
+			minetest.swap_node(pos, {name = "air"})	
+		end		
+	end
 
 ----------------------------
 --       Main Code        --
@@ -258,10 +373,12 @@ for _,v1 in pairs(slab_index) do
 							drawtype = "glasslike",                                                            
 							sounds = v1_def.sounds,
 							groups = v1_groups,
-							drop = v1,
-							after_destruct = function(pos, oldnode)
-								minetest.set_node(pos, {name = v2, param2 = oldnode.param2})
-							end })
+							drop = "",
+							comboblock_v1 = tostring(v1),
+							comboblock_v2 = tostring(v2),
+							after_dig_node = function(pos, oldnode, oldmetadata, digger)							
+												cb_after_dig_node(pos, oldnode, oldmetadata, digger)							
+											end })
 					
 				elseif not v1_is_glass and not v2_is_glass then -- normal nodes	
 																																										
@@ -278,10 +395,12 @@ for _,v1 in pairs(slab_index) do
 							drawtype = "normal",                                                              
 							sounds = v1_def.sounds,
 							groups = v1_groups,
-							drop = v1,
-							after_destruct = function(pos, oldnode)
-								minetest.set_node(pos, {name = v2, param2 = oldnode.param2})
-							end })
+							drop = "",
+							comboblock_v1 = tostring(v1),
+							comboblock_v2 = tostring(v2),
+							after_dig_node = function(pos, oldnode, oldmetadata, digger)								
+												cb_after_dig_node(pos, oldnode, oldmetadata, digger)			
+											end })
 				else 
 					-- Can't have a nodetype as half "glasslike" and half "normal" :(
 				end
@@ -294,14 +413,14 @@ for _,v1 in pairs(slab_index) do
 	-- Override all slabs registered on_place function	
 		
 		minetest.override_item(v1, {
+		
 			on_place = function(itemstack, placer, pointed_thing)			
 						local pos = pointed_thing.under			
 						local placer_pos = placer:get_pos()				
 						local err_mix = S("Hmmmm... that wont work I can't mix glass slabs and none glass slabs")-- error txt for mixing glass/not glass
 						local err_un = S("Hmmmm... The slab wont fit there, somethings in the way")              -- error txt for unknown/unexpected
 						local pla_is_glass = string.find(string.lower(tostring(itemstack:get_name())), "glass")  -- itemstack item glass slab (trying to place item) - cant use drawtype as slabs are all type = nodebox
-						local node_c = minetest.get_node({x=pos.x, y=pos.y, z=pos.z})                            -- node clicked
-						local node_c_isslab = minetest.registered_nodes[node_c.name].groups.slab                 -- is node clicked in slab group					
+						local node_c = minetest.get_node({x=pos.x, y=pos.y, z=pos.z})                            -- node clicked				
 						local node_c_is_glass = string.find(string.lower(tostring(node_c.name)), "glass")        -- is node clicked glass
 			
 				-- Setup Truth table				
@@ -345,7 +464,7 @@ for _,v1 in pairs(slab_index) do
 				local point = vector.subtract(pointed.intersection_point,pointed.under)
 				local normal = pointed.intersection_normal
 				local nor_string = tostring(math.abs(normal.x)..math.abs(normal.y)..math.abs(normal.z))
-				local pot_short_axis = point[comboblock_param_side_offset[nor_string][1]]
+				local pot_short_axis = point[comboblock_param_side_offset[nor_string][1]]                   -- When == 0 large flat side is inside node
 				local node_ax_pos     = vector.add(pos,normal)
 				local node_along_axis = minetest.get_node(node_ax_pos)                        				-- retrieve the node along +- axis for xyz 
 				local node_ax_is_slab = minetest.registered_nodes[node_along_axis.name].groups.slab    		-- is node along axis in slab group	
@@ -369,7 +488,7 @@ for _,v1 in pairs(slab_index) do
 					local multi = normal[comboblock_param_side_offset[nor_string][1]]
 					local p2 = 0
 					
-					-- top/bot/left/right are fairly meaningless just labels
+					-- top/bot/left/right are fairly meaningless just labels - align on X
 					if math.abs(point[hor]) < 0.2 and math.abs(point[ver]) < 0.2 then
 						p2 = comboblock_p2_axis[tostring(normal.x..normal.y..normal.z)]["m"]
 					
