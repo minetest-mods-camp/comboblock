@@ -20,8 +20,11 @@ local cs = tonumber(minetest.settings:get("comboblock_scale")) or 16
 local node_count = 0
 local existing_node_count = 0
 local to_many_nodes = false
-local comboblock = {}
+comboblock = {}
 
+local m_name = minetest.get_current_modname()
+local m_path = minetest.get_modpath(m_name)
+	dofile(m_path.. "/i_comboblock_letter.lua" )	
 ----------------------------
 --       Functions        --
 ----------------------------
